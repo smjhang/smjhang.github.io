@@ -1,0 +1,569 @@
+
+ <!DOCTYPE HTML>
+<html >
+<head>
+  <meta charset="UTF-8">
+  
+    <title>HTML5 server send event 實戰 | web development</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="Siou-Ming Jhang">
+    
+
+    
+    <meta name="description" content="簡介本篇將介紹如何使用 HTML5 的 SSE(Server Send Event) 來實作即時推播的功能。目前用來實作即時推播的常見方式有傳統的 ajax long polling 還有 web socket。然而如果只需要由伺服器到瀏覽器的單向傳輸，那麼其實不需要用到雙向傳輸的 web socket。比起需要另外建立 server 的 web socket 技術，使用 SSE 由於是沿用 ht">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTML5 server send event 實戰">
+<meta property="og:url" content="http://yoursite.com/2016/07/27/server-send/index.html">
+<meta property="og:site_name" content="web development">
+<meta property="og:description" content="簡介本篇將介紹如何使用 HTML5 的 SSE(Server Send Event) 來實作即時推播的功能。目前用來實作即時推播的常見方式有傳統的 ajax long polling 還有 web socket。然而如果只需要由伺服器到瀏覽器的單向傳輸，那麼其實不需要用到雙向傳輸的 web socket。比起需要另外建立 server 的 web socket 技術，使用 SSE 由於是沿用 ht">
+<meta property="og:updated_time" content="2016-08-01T22:28:12.457Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HTML5 server send event 實戰">
+<meta name="twitter:description" content="簡介本篇將介紹如何使用 HTML5 的 SSE(Server Send Event) 來實作即時推播的功能。目前用來實作即時推播的常見方式有傳統的 ajax long polling 還有 web socket。然而如果只需要由伺服器到瀏覽器的單向傳輸，那麼其實不需要用到雙向傳輸的 web socket。比起需要另外建立 server 的 web socket 技術，使用 SSE 由於是沿用 ht">
+
+    
+    <link rel="alternative" href="/atom.xml" title="web development" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="../../../../css/style.css">
+</head>
+
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="web development">web development</a></h1>
+				<h2 class="blog-motto"></h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="Menu">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="/search/index.html" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" autocomplete="off" name="q" maxlength="20" placeholder="Search" />
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/07/27/server-send/" title="HTML5 server send event 實戰" itemprop="url">HTML5 server send event 實戰</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="Siou-Ming Jhang" target="_blank" itemprop="author">Siou-Ming Jhang</a>
+		
+  <p class="article-time">
+    <time datetime="2016-07-27T14:49:42.000Z" itemprop="datePublished"> Published 2016-07-27</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">Contents</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#簡介"><span class="toc-number">1.</span> <span class="toc-text">簡介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#redis-資料結構規劃"><span class="toc-number">2.</span> <span class="toc-text">redis 資料結構規劃</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#redis-keyspace-notification"><span class="toc-number">3.</span> <span class="toc-text">redis keyspace notification</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#使用-Predis-在-PHP-中操作-redis"><span class="toc-number">4.</span> <span class="toc-text">使用 Predis 在 PHP 中操作 redis</span></a></li></ol>
+		
+		</div>
+		
+		<h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>本篇將介紹如何使用 HTML5 的 SSE(Server Send Event) 來實作即時推播的功能。<br>目前用來實作即時推播的常見方式有傳統的 ajax long polling 還有 web socket。<br>然而如果只需要由伺服器到瀏覽器的單向傳輸，那麼其實不需要用到雙向傳輸的 web socket。<br>比起需要另外建立 server 的 web socket 技術，<br>使用 SSE 由於是沿用 http 通訊協定，因此不需要再另外建立 server，使用已有的 web server 就可以了。<br>因此實作起來更簡單，也不用再多維護一個 server。</p>
+<p>本篇將以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。<br>其他使用到的技術有 redis keyspace notification. </p>
+<h1 id="redis-資料結構規劃"><a href="#redis-資料結構規劃" class="headerlink" title="redis 資料結構規劃"></a>redis 資料結構規劃</h1><p>商品的資料儲存在 product:#id 的 hash，<br>並建立一個 set 用來維護商品清單。</p>
+<table>
+<thead>
+<tr>
+<th>data type</th>
+<th>key</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>set</td>
+<td>product_ids</td>
+<td>商品總類清單</td>
+</tr>
+<tr>
+<td>hash</td>
+<td>product:#id</td>
+<td>商品細節</td>
+</tr>
+</tbody>
+</table>
+<caption>表1: 資料結構規劃</caption>
+
+<p><caption>建立 redis 資料</caption></p>
+<pre><code>HMSET product:1 name &quot;多力多滋組合包-綜合 54g*4包/組&quot; price 55 stock 256
+HMSET product:2 name &quot;【洋芋片】Lays樂事瑞士香濃起司 97g/包&quot; price 32 stock 179
+HMSET product:3 name &quot;【蔓莓纖果】萬歲牌蔓莓纖果150G&quot;  price 59 stock 326
+HMSET product:4 name &quot;【蒜香青豆】盛香珍蒜香青豆 240g/包&quot; price 42 stock 324
+HMSET product:5 name &quot;【義美】義美小泡芙（檸檬風味）171g/盒&quot; price 64 stock 64
+HMSET product:6 name &quot;【洋芋片】波的多超厚切洋芋片-蚵仔煎味&quot; price 53 stock 182
+HMSET product:7 name &quot;【義美】義美小蛋卷（原味）&quot; price 49 stock 313
+HMSET product:8 name &quot;品客碳烤BBQ口味洋芋片&quot; price 55 stock 158
+SADD products 1
+SADD products 2
+SADD products 3
+SADD products 4
+SADD products 5
+SADD products 6
+SADD products 7
+SADD products 8
+</code></pre><h1 id="redis-keyspace-notification"><a href="#redis-keyspace-notification" class="headerlink" title="redis keyspace notification"></a>redis keyspace notification</h1><p>為了讓物品庫存數量能即時反應到應用程式，必須讓資料庫將資料的異動反應給應用程式，<br>這邊說明如何使用 redis 的 keyspace notification 功能來實現異動事件通知。<br>至於更詳細的說明可以看 <a href="http://redis.io/topics/notifications" title="Redis Keyspace Notifications" target="_blank" rel="external">官網說明文件</a>。</p>
+<p>keyspace notification 可讓應用程式訂閱 keyspace 更動的事件，<br>當 redis 的資料有異動的時候有兩種類型的事件會被觸發：</p>
+<ol>
+<li>第一種讓我們可以監聽某個 key 是否被異動，當它被異動的時候，我們可以得知異動這個 key 的命令類型，稱為 keyspace 事件。</li>
+<li>第二種讓我們可以監聽是否有某個命令類型被執行，當它被執行時，透過這個事件，我們可以得知被這個命令影響到的 key，稱為 keyevent 事件。</li>
+</ol>
+<p>在使用 keyspace notification 前，需要先打開這個功能，編輯 redis.conf 將 notify-keyspace-events 設成：</p>
+<pre><code>notify-keyspace-events &quot;KEA&quot;
+</code></pre><p>根據官網的說明，<br>K - Keyspace events<br>E - Keyevent event<br>A - All commands<br>KEA 代表要訂閱所有命令類型的第一種和第二種事件。<br>更改設定檔要重啟 redis 後才會生效。</p>
+<p>redis 的事件通知是透過 PUB/SUB 來進行的，因此當上述兩種事件發生的時候，redis 會分別發佈訊息到以下兩種 channel 上：</p>
+<pre><code>1. PUBLISH __keyspace@&lt;db id&gt;__:&lt;key name&gt; &lt;command type&gt;
+2. PUBLISH __keyevent@&lt;db id&gt;__:&lt;command type&gt; &lt;key name&gt; 
+</code></pre><p>我們可以透過 PSUBSCRIBE 來訂閱這些事件：</p>
+<pre><code>1. PSUBSCRIBE __keyspace@*__:*
+2. PSUBSCRIBE __keyevent@*__:*
+</code></pre><p>假設我們要觀察 del test1 test2 test3 test4 指令對 keyspace 和 keyevent 的影響可以分別訂閱以下兩個 channel</p>
+<pre><code>127.0.0.1:6379&gt; PSUBSCRIBE __keyspace@*__:test*
+Reading messages... (press Ctrl-C to quit)
+1) &quot;psubscribe&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) (integer) 1
+
+127.0.0.1:6379&gt; PSUBSCRIBE __keyevent@*__:del
+Reading messages... (press Ctrl-C to quit)
+1) &quot;psubscribe&quot;
+2) &quot;__keyevent@*__:del&quot;
+3) (integer) 1
+</code></pre><p>設定要處理的 key</p>
+<pre><code>127.0.0.1:6379&gt; set test1 test1
+OK
+127.0.0.1:6379&gt; set test2 test2
+OK
+127.0.0.1:6379&gt; set test3 test3
+OK
+127.0.0.1:6379&gt; set test4 test4
+</code></pre><p>在建立過程中，可以看到對 keyspace 的監聽訊息如下</p>
+<pre><code>127.0.0.1:6379&gt; PSUBSCRIBE __keyspace@*__:test*
+Reading messages... (press Ctrl-C to quit)
+1) &quot;psubscribe&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) (integer) 1
+1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test1&quot;
+4) &quot;set&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test2&quot;
+4) &quot;set&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test3&quot;
+4) &quot;set&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test4&quot;
+4) &quot;set&quot;
+</code></pre><p>現在刪除 test, tests, test3, test4</p>
+<pre><code>127.0.0.1:6379&gt; del test1 test2 test3 test4
+(integer) 4
+</code></pre><p>可以看到對 keyspace 的監聽如下：</p>
+<pre><code>1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test1&quot;
+4) &quot;del&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test2&quot;
+4) &quot;del&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test3&quot;
+4) &quot;del&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyspace@*__:test*&quot;
+3) &quot;__keyspace@0__:test4&quot;
+4) &quot;del&quot;
+</code></pre><p>對 keyevent 的監聽如下：</p>
+<pre><code>1) &quot;pmessage&quot;
+2) &quot;__keyevent@*__:del&quot;
+3) &quot;__keyevent@0__:del&quot;
+4) &quot;test1&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyevent@*__:del&quot;
+3) &quot;__keyevent@0__:del&quot;
+4) &quot;test2&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyevent@*__:del&quot;
+3) &quot;__keyevent@0__:del&quot;
+4) &quot;test3&quot;
+1) &quot;pmessage&quot;
+2) &quot;__keyevent@*__:del&quot;
+3) &quot;__keyevent@0__:del&quot;
+4) &quot;test4&quot;
+</code></pre><p>從上面的結果我們可以知道一個命令對多個 key 的操作，是會引發多次 keyspace 事件和 keyevent 事件的。<br>然後我們透過這些事件只能知道是甚麼 key 被影響，而不知道 key 的資料，如果想要知道 key 的資料則要自己再去讀取那個 key。</p>
+<h1 id="使用-Predis-在-PHP-中操作-redis"><a href="#使用-Predis-在-PHP-中操作-redis" class="headerlink" title="使用 Predis 在 PHP 中操作 redis"></a>使用 Predis 在 PHP 中操作 redis</h1><p>建立一個 server-send 專案</p>
+<pre><code>mkdir server-send
+</code></pre><p>我們這邊使用 composer 來取得 Predis Async, 使用非同步版本的 Predis 比較適合這種監聽事件的任務。<br>關於 composer 的使用可以參考 <a href="https://getcomposer.org/" title="Composer" target="_blank" rel="external">composer 官網說明文件</a>。<br>關於 Predis Async 的介紹可以參考 <a href="https://packagist.org/packages/predis/predis" target="_blank" rel="external">Predis Async</a>。</p>
+<p>在該專案內建立 composer.json 如下：</p>
+<pre><code>{
+  &quot;require&quot;:{&quot;predis/predis-async&quot;:&quot;dev-master&quot;}
+}
+</code></pre><p>執行 <code>composer install</code> 來從 Packagist 下載 Predis-Async</p>
+<pre><code>compsoer install
+</code></pre>  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/redis-notification/">redis notification</a><a href="/tags/server-sent-event/">server sent event</a><a href="/tags/indexed-db/">indexed db</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="http://yoursite.com/2016/07/27/server-send/" data-title="HTML5 server send event 實戰 | web development" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/07/27/session-persistence/" title="session-persistence">
+  <strong>上一篇：</strong><br/>
+  <span>
+  session-persistence</span>
+</a>
+</div>
+
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="Show Sidebar"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">Contents</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#簡介"><span class="toc-number">1.</span> <span class="toc-text">簡介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#redis-資料結構規劃"><span class="toc-number">2.</span> <span class="toc-text">redis 資料結構規劃</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#redis-keyspace-notification"><span class="toc-number">3.</span> <span class="toc-text">redis keyspace notification</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#使用-Predis-在-PHP-中操作-redis"><span class="toc-number">4.</span> <span class="toc-text">使用 Predis 在 PHP 中操作 redis</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="Hide Sidebar"></a></div>
+<aside class="clearfix">
+
+  
+
+
+  
+
+  
+<div class="tagslist">
+	<p class="asidetitle">Tags</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/redis-notification/" title="redis notification">redis notification<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/server-sent-event/" title="server sent event">server sent event<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/indexed-db/" title="indexed db">indexed db<sup>1</sup></a></li>
+			
+		
+			
+		
+			
+		
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">Links</p>
+    <ul>
+        
+    </ul>
+</div>
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	
+	<section class="info">
+		<p> Hello ,I&#39;m Siou-Ming Jhang. <br/>
+			This is my blog about web development.</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		<a href="http://weibo.com/2176287895" target="_blank" class="icon-weibo" title="微博"></a>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2016 
+		
+		<a href="/about" target="_blank" title="Siou-Ming Jhang">Siou-Ming Jhang</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/jquery.qrcode-0.12.0.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<div class="hoverqrcode clearfix"></div>',
+  '<a class="overlay" id="qrcode"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+
+  $('.hoverqrcode').hide();
+
+  var myWidth = 0;
+  function updatehoverqrcode(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+    var qrsize = myWidth > 1024 ? 200:100;
+    var options = {render: 'image', size: qrsize, fill: '#2ca6cb', text: url, radius: 0.5, quiet: 1};
+    var p = $('.article-share-qrcode').position();
+    $('.hoverqrcode').empty().css('width', qrsize).css('height', qrsize)
+                          .css('left', p.left-qrsize/2+20).css('top', p.top-qrsize-10)
+                          .qrcode(options);
+  };
+  $(window).resize(function(){
+    $('.hoverqrcode').hide();
+  });
+  $('.article-share-qrcode').click(function(){
+    updatehoverqrcode();
+    $('.hoverqrcode').toggle();
+  });
+  $('.article-share-qrcode').hover(function(){}, function(){
+      $('.hoverqrcode').hide();
+  });
+});   
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="Back to Top"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
