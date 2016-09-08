@@ -4,15 +4,10 @@
   
     
     <entry>
-      <title></title>
-      <url>http://yoursite.com/2016/09/08/server-send-event/</url>
-      <content type="html"></content>
-    </entry>
-    
-    <entry>
       <title><![CDATA[Redis Notification]]></title>
-      <url>http://yoursite.com/2016/07/27/redis-notification/</url>
-      <content type="html"><![CDATA[<h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以節省系統資源。<br>本篇探討將使用 redis 的 keyspace notification 功能來實現資料異動的即時通知，並且以 PHP 程式來實作。<br>本篇將會以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。<br><a id="more"></a></p>
+      <url>https://smjhang.github.io/2016/07/27/redis-notification/</url>
+      <content type="html"><![CDATA[<h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以節省系統資源。<br>本篇探討將使用 redis 的 keyspace notification 功能來實現資料異動的即時通知，並且以 PHP 程式來實作。<br>本篇將會以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。</p>
+<a id="more"></a>
 <h1 id="redis-資料結構規劃"><a href="#redis-資料結構規劃" class="headerlink" title="redis 資料結構規劃"></a>redis 資料結構規劃</h1><p>商品的資料儲存在 product:#id 的 hash，<br>並建立一個 set 用來維護商品清單。</p>
 <table>
 <thead>
@@ -113,10 +108,10 @@ Reading messages... (press Ctrl-C to quit)
 2) &quot;__keyspace@*__:test*&quot;
 3) &quot;__keyspace@0__:test4&quot;
 4) &quot;set&quot;
-</code></pre><p>注意 <code>127.0.0.1:6379&gt; PSUBSCRIBE __keyevent@*__:del</code> 那個 redis-cli 沒有任何更新，因為沒有任何 del 操作被執行。<br>現在刪除 test, tests, test3, test4：</p>
+</code></pre><p>注意 127.0.0.1:6379&gt; PSUBSCRIBE <strong>keyevent@*</strong>:del 那個 redis-cli 沒有任何更新，因為沒有任何 del 操作被執行。<br>現在刪除 test, tests, test3, test4：</p>
 <pre><code>127.0.0.1:6379&gt; del test1 test2 test3 test4
 (integer) 4
-</code></pre><p>可以看到對 keyspace (<code>127.0.0.1:6379&gt; PSUBSCRIBE __keyspace@*__:test*</code>) 的監聽如下：</p>
+</code></pre><p>可以看到對 keyspace (127.0.0.1:6379&gt; PSUBSCRIBE <strong>keyspace@*</strong>:test*) 的監聽如下：</p>
 <pre><code>1) &quot;pmessage&quot;
 2) &quot;__keyspace@*__:test*&quot;
 3) &quot;__keyspace@0__:test1&quot;
@@ -133,7 +128,7 @@ Reading messages... (press Ctrl-C to quit)
 2) &quot;__keyspace@*__:test*&quot;
 3) &quot;__keyspace@0__:test4&quot;
 4) &quot;del&quot;
-</code></pre><p>對 keyevent (<code>127.0.0.1:6379&gt; PSUBSCRIBE __keyevent@*__:del</code>)的監聽如下：</p>
+</code></pre><p>對 keyevent (127.0.0.1:6379&gt; PSUBSCRIBE <strong>keyevent@*</strong>:del)的監聽如下：</p>
 <pre><code>1) &quot;pmessage&quot;
 2) &quot;__keyevent@*__:del&quot;
 3) &quot;__keyevent@0__:del&quot;
@@ -158,155 +153,11 @@ Reading messages... (press Ctrl-C to quit)
 <pre><code>{
   &quot;require&quot;:{&quot;predis/predis-async&quot;:&quot;dev-master&quot;}
 }
-</code></pre><p>執行 <code>composer install</code> 來從 Packagist 下載 Predis-Async</p>
+</code></pre><p>執行  composer install  來從 Packagist 下載 Predis-Async</p>
 <pre><code>compsoer install
 </code></pre><p>可以開始用 Predis 了，編輯程式檔 notify.php 如下：</p>
-<pre><code>&lt;?php
-require __DIR__.&apos;/vendor/autoload.php&apos;;
-
-class LocalStorage
-{
-    private $product_store = []; // 目前所有 products
-
-    /**
-     * 使用前更新目前所有 products
-     * @param \Predis\Client $client_sync
-     */
-    public function init(\Predis\Client $client_sync)
-    {
-        $all_product_keys = $client_sync-&gt;keys(&apos;product:*&apos;);
-        foreach ($all_product_keys as $product_key) {
-            // 抓取 id
-            preg_match(&apos;/product:(\d+)/&apos;, $product_key, $matches);
-            $id = $matches[1];
-            // 設定 id=&gt;product 關聯
-            $this-&gt;product_store[$id] = $client_sync-&gt;hgetall($product_key);
-        }
-        // 排序 product_store
-        ksort($this-&gt;product_store);
-    }
-
-    /**
-     * 判斷 id 是否在 product_store 內
-     * @param $id
-     * @return bool
-     */
-    public function contains($id)
-    {
-        if (isset($this-&gt;product_store[$id])) {
-            return true;
-        }
-        return false;
-    }
-
-
-    /**
-     * 處理新增事件
-     * @param $id
-     * @param $product
-     */
-    function insertHandler($id, $product)
-    {
-        echo &quot;新增 product_store 項目:\n&quot;;
-        echo &quot;id: $id\n&quot;;
-        echo &quot;name: {$product[&apos;name&apos;]}\n&quot;;
-        echo &quot;price: {$product[&apos;price&apos;]}\n&quot;;
-        echo &quot;stock: {$product[&apos;stock&apos;]}\n\n&quot;;
-        $this-&gt;product_store[$id] = $product;
-    }
-
-
-    /**
-     * 處理更改事件
-     * @param $id
-     * @param $product
-     */
-    function updateHandler($id, $product)
-    {
-        echo &quot;更改 product_store 項目:\n&quot;;
-        echo &quot;id: $id\n&quot;;
-        if ($this-&gt;product_store[$id][&apos;name&apos;] !== $product[&apos;name&apos;]) {
-            echo &quot;name: {$product[&apos;name&apos;]}\n&quot;;
-            $this-&gt;product_store[$id][&apos;name&apos;] = $product[&apos;name&apos;];
-        }
-        if ($this-&gt;product_store[$id][&apos;price&apos;] !== $product[&apos;price&apos;]) {
-            echo &quot;price: {$product[&apos;price&apos;]}\n&quot;;
-            $this-&gt;product_store[$id][&apos;price&apos;] = $product[&apos;price&apos;];
-        }
-        if ($this-&gt;product_store[$id][&apos;stock&apos;] !== $product[&apos;stock&apos;]) {
-            echo &quot;stock: {$product[&apos;stock&apos;]}\n&quot;;
-            $this-&gt;product_store[$id][&apos;stock&apos;] = $product[&apos;stock&apos;];
-        }
-        echo &quot;\n&quot;;
-    }
-
-    /**
-     * 處理刪除事件
-     * @param $id
-     * @param $product
-     */
-    function deleteHandler($id, $product)
-    {
-        echo &quot;刪除 product_store 項目:\n&quot;;
-        echo &quot;id: $id\n\n&quot;;
-        unset($this-&gt;product_store[$id]);
-    }
-
-    /**
-     * 顯示 product_store
-     */
-    function showStore()
-    {
-        foreach ($this-&gt;product_store as $id =&gt; $product) {
-            echo &quot;id: $id\n&quot;;
-            echo &quot;name: {$product[&apos;name&apos;]}\n&quot;;
-            echo &quot;price: {$product[&apos;price&apos;]}\n&quot;;
-            echo &quot;stock: {$product[&apos;stock&apos;]}\n&quot;;
-            echo &quot;----------------------------------------------\n&quot;;
-        }
-    }
-
-}
-
-$client = new Predis\Async\Client(&apos;tcp://127.0.0.1:6379&apos;);
-$client_sync = new Predis\Client(&apos;tcp://127.0.0.1:6379&apos;);
-
-$local_storage = new LocalStorage();
-$local_storage-&gt;init($client_sync);
-$local_storage-&gt;showStore();
-
-
-/**
- * 註冊處理 keyspace 異動的事件，並根據事件的訊息做相應的處理
- */
-$client-&gt;connect(function ($client) use ($client_sync, $local_storage) {
-    // 使用 psubscribe 訂閱 product:#id 這種樣式的 key 被異動的事件
-    $client-&gt;pubSubLoop([&apos;psubscribe&apos;=&gt;&apos;__keyspace@*__:product:*&apos;],
-    function ($event, $pubsub) use ($client_sync, $local_storage) {
-        // 當 product:#id 被異動的時候，根據事件發生的 channel 的名稱取得 key 的名稱和 product 的 id
-        if (preg_match(&apos;/__keyspace@\d+__:(product:(\d+))/&apos;, $event-&gt;channel, $matches)) {
-            $product_key = $matches[1];
-            $product_id = $matches[2];
-            // 取得被異動後，最新的 product 資料
-            $product = $client_sync-&gt;hgetall($product_key);
-            // 根據事件傳來的訊息得知操作 key 的類型
-            $op = $event-&gt;payload;
-            if ($op === &apos;del&apos;) {
-                $local_storage-&gt;deleteHandler($product_id, $product);
-            } else if ($op === &apos;hset&apos;) {
-                // 當操作類型是 hset 的時候，需要從目前的 product store 去判斷是新增還是修改
-                if ($local_storage-&gt;contains($product_id)) {
-                    $local_storage-&gt;updateHandler($product_id, $product);
-                } else {
-                    $local_storage-&gt;insertHandler($product_id,$product);
-                }
-            }
-        }
-    });
-});
-// 開始監聽 keyspace 異動事件
-$client-&gt;getEventLoop()-&gt;run();
-</code></pre><p>這個程式維護一個本地的商品清單，並且隨時接收 redis 的最新異動來更新本地清單。<br>首先先建立一個 LocalStorage 物件來管理本地商品清單的增刪查改。<br>然後使用 Predis Async 來訂閱所有關於 product：* 的異動，<br>redis 的 keyspace notification 對要監聽的每個 key 都建立一個 channel<br>要訂閱的 channel 樣式如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line"><span class="keyword">require</span> <span class="keyword">__DIR__</span>.<span class="string">'/vendor/autoload.php'</span>;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">LocalStorage</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">private</span> $product_store = []; <span class="comment">// 目前所有 products</span></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 使用前更新目前所有 products</div><div class="line">     * <span class="doctag">@param</span> \Predis\Client $client_sync</div><div class="line">     */</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">init</span><span class="params">(\Predis\Client $client_sync)</span></span></div><div class="line">    &#123;</div><div class="line">        $all_product_keys = $client_sync-&gt;keys(<span class="string">'product:*'</span>);</div><div class="line">        <span class="keyword">foreach</span> ($all_product_keys <span class="keyword">as</span> $product_key) &#123;</div><div class="line">            <span class="comment">// 抓取 id</span></div><div class="line">            preg_match(<span class="string">'/product:(\d+)/'</span>, $product_key, $matches);</div><div class="line">            $id = $matches[<span class="number">1</span>];</div><div class="line">            <span class="comment">// 設定 id=&gt;product 關聯</span></div><div class="line">            <span class="keyword">$this</span>-&gt;product_store[$id] = $client_sync-&gt;hgetall($product_key);</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// 排序 product_store</span></div><div class="line">        ksort(<span class="keyword">$this</span>-&gt;product_store);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 判斷 id 是否在 product_store 內</div><div class="line">     * <span class="doctag">@param</span> $id</div><div class="line">     * <span class="doctag">@return</span> bool</div><div class="line">     */</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">contains</span><span class="params">($id)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">isset</span>(<span class="keyword">$this</span>-&gt;product_store[$id])) &#123;</div><div class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 處理新增事件</div><div class="line">     * <span class="doctag">@param</span> $id</div><div class="line">     * <span class="doctag">@param</span> $product</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">insertHandler</span><span class="params">($id, $product)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"新增 product_store 項目:\n"</span>;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"id: $id\n"</span>;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"name: &#123;$product['name']&#125;\n"</span>;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"price: &#123;$product['price']&#125;\n"</span>;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"stock: &#123;$product['stock']&#125;\n\n"</span>;</div><div class="line">        <span class="keyword">$this</span>-&gt;product_store[$id] = $product;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 處理更改事件</div><div class="line">     * <span class="doctag">@param</span> $id</div><div class="line">     * <span class="doctag">@param</span> $product</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">updateHandler</span><span class="params">($id, $product)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"更改 product_store 項目:\n"</span>;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"id: $id\n"</span>;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">$this</span>-&gt;product_store[$id][<span class="string">'name'</span>] !== $product[<span class="string">'name'</span>]) &#123;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"name: &#123;$product['name']&#125;\n"</span>;</div><div class="line">            <span class="keyword">$this</span>-&gt;product_store[$id][<span class="string">'name'</span>] = $product[<span class="string">'name'</span>];</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">$this</span>-&gt;product_store[$id][<span class="string">'price'</span>] !== $product[<span class="string">'price'</span>]) &#123;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"price: &#123;$product['price']&#125;\n"</span>;</div><div class="line">            <span class="keyword">$this</span>-&gt;product_store[$id][<span class="string">'price'</span>] = $product[<span class="string">'price'</span>];</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">$this</span>-&gt;product_store[$id][<span class="string">'stock'</span>] !== $product[<span class="string">'stock'</span>]) &#123;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"stock: &#123;$product['stock']&#125;\n"</span>;</div><div class="line">            <span class="keyword">$this</span>-&gt;product_store[$id][<span class="string">'stock'</span>] = $product[<span class="string">'stock'</span>];</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"\n"</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 處理刪除事件</div><div class="line">     * <span class="doctag">@param</span> $id</div><div class="line">     * <span class="doctag">@param</span> $product</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">deleteHandler</span><span class="params">($id, $product)</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"刪除 product_store 項目:\n"</span>;</div><div class="line">        <span class="keyword">echo</span> <span class="string">"id: $id\n\n"</span>;</div><div class="line">        <span class="keyword">unset</span>(<span class="keyword">$this</span>-&gt;product_store[$id]);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 顯示 product_store</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">showStore</span><span class="params">()</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">foreach</span> (<span class="keyword">$this</span>-&gt;product_store <span class="keyword">as</span> $id =&gt; $product) &#123;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"id: $id\n"</span>;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"name: &#123;$product['name']&#125;\n"</span>;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"price: &#123;$product['price']&#125;\n"</span>;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"stock: &#123;$product['stock']&#125;\n"</span>;</div><div class="line">            <span class="keyword">echo</span> <span class="string">"----------------------------------------------\n"</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">$client = <span class="keyword">new</span> Predis\Async\Client(<span class="string">'tcp://127.0.0.1:6379'</span>);</div><div class="line">$client_sync = <span class="keyword">new</span> Predis\Client(<span class="string">'tcp://127.0.0.1:6379'</span>);</div><div class="line"></div><div class="line">$local_storage = <span class="keyword">new</span> LocalStorage();</div><div class="line">$local_storage-&gt;init($client_sync);</div><div class="line">$local_storage-&gt;showStore();</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 註冊處理 keyspace 異動的事件，並根據事件的訊息做相應的處理</div><div class="line"> */</div><div class="line">$client-&gt;connect(<span class="function"><span class="keyword">function</span> <span class="params">($client)</span> <span class="title">use</span> <span class="params">($client_sync, $local_storage)</span> </span>&#123;</div><div class="line">    <span class="comment">// 使用 psubscribe 訂閱 product:#id 這種樣式的 key 被異動的事件</span></div><div class="line">    $client-&gt;pubSubLoop([<span class="string">'psubscribe'</span>=&gt;<span class="string">'__keyspace@*__:product:*'</span>],</div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="params">($event, $pubsub)</span> <span class="title">use</span> <span class="params">($client_sync, $local_storage)</span> </span>&#123;</div><div class="line">        <span class="comment">// 當 product:#id 被異動的時候，根據事件發生的 channel 的名稱取得 key 的名稱和 product 的 id</span></div><div class="line">        <span class="keyword">if</span> (preg_match(<span class="string">'/__keyspace@\d+__:(product:(\d+))/'</span>, $event-&gt;channel, $matches)) &#123;</div><div class="line">            $product_key = $matches[<span class="number">1</span>];</div><div class="line">            $product_id = $matches[<span class="number">2</span>];</div><div class="line">            <span class="comment">// 取得被異動後，最新的 product 資料</span></div><div class="line">            $product = $client_sync-&gt;hgetall($product_key);</div><div class="line">            <span class="comment">// 根據事件傳來的訊息得知操作 key 的類型</span></div><div class="line">            $op = $event-&gt;payload;</div><div class="line">            <span class="keyword">if</span> ($op === <span class="string">'del'</span>) &#123;</div><div class="line">                $local_storage-&gt;deleteHandler($product_id, $product);</div><div class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> ($op === <span class="string">'hset'</span>) &#123;</div><div class="line">                <span class="comment">// 當操作類型是 hset 的時候，需要從目前的 product store 去判斷是新增還是修改</span></div><div class="line">                <span class="keyword">if</span> ($local_storage-&gt;contains($product_id)) &#123;</div><div class="line">                    $local_storage-&gt;updateHandler($product_id, $product);</div><div class="line">                &#125; <span class="keyword">else</span> &#123;</div><div class="line">                    $local_storage-&gt;insertHandler($product_id,$product);</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line">&#125;);</div><div class="line"><span class="comment">// 開始監聽 keyspace 異動事件</span></div><div class="line">$client-&gt;getEventLoop()-&gt;run();</div></pre></td></tr></table></figure>
+<p>這個程式維護一個本地的商品清單，並且隨時接收 redis 的最新異動來更新本地清單。<br>首先先建立一個 LocalStorage 物件來管理本地商品清單的增刪查改。<br>然後使用 Predis Async 來訂閱所有關於 product：* 的異動，<br>redis 的 keyspace notification 對要監聽的每個 key 都建立一個 channel<br>要訂閱的 channel 樣式如下：</p>
 <pre><code>__keyspace@*__:product:*
 </code></pre><p>然後當資料異動事件發生的時候，可以取得 channel 的名稱和從 channel 傳遞過來的訊息：</p>
 <pre><code>channel 的名稱： __keyspace@0__:product:1
@@ -378,6 +229,12 @@ stock: 75
 id: 9
 </code></pre><h1 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h1><p>這邊介紹 redis 如何實現資料異動通知的功能。不過要注意的是 redis 不會保存通知過的訊息，因此如果對 redis 的連線斷線的話，斷線的應用程式是無法再取得斷線期間的異動通知。<br>如果非常在意事件一定要通知到的話，要自己想辦法把事件保留起來，官網上說未來 redis 可能會將這些通知保留再另外的 SET 內，不過現階段還沒有，可能要自己實作保存事件的部份。</p>
 ]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[HTML5 Server Send Event]]></title>
+      <url>https://smjhang.github.io/2016/07/27/server-send-event/</url>
+      <content type="html"><![CDATA[<h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><a id="more"></a>]]></content>
     </entry>
     
   

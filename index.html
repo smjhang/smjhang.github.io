@@ -74,7 +74,7 @@
 
 
 
-  <link rel="alternate" href="atom.xml" title="Web Development" type="application/atom+xml" />
+  <link rel="alternate" href="atom.xml" title="web development" type="application/atom+xml" />
 
 
 
@@ -87,11 +87,11 @@
 
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="Web Development">
-<meta property="og:url" content="http://yoursite.com/index.html">
-<meta property="og:site_name" content="Web Development">
+<meta property="og:title" content="web development">
+<meta property="og:url" content="https://smjhang.github.io/index.html">
+<meta property="og:site_name" content="web development">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Web Development">
+<meta name="twitter:title" content="web development">
 
 
 
@@ -99,7 +99,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     scheme: 'Pisces',
-    sidebar: {"position":"left","display":"always"},
+    sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
     duoshuo: {
@@ -112,9 +112,9 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="https://smjhang.github.io/"/>
 
-  <title> Web Development </title>
+  <title> web development </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-tw">
@@ -147,7 +147,7 @@
   <div class="custom-logo-site-title">
     <a href="/"  class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <span class="site-title">Web Development</span>
+      <span class="site-title">web development</span>
       <span class="logo-line-after"><i></i></span>
     </a>
   </div>
@@ -170,7 +170,7 @@
       
         
         <li class="menu-item menu-item-home">
-          <a href="" rel="section">
+          <a href="/" rel="section">
             
             首頁
           </a>
@@ -178,7 +178,7 @@
       
         
         <li class="menu-item menu-item-archives">
-          <a href="" rel="section">
+          <a href="/archives" rel="section">
             
             歸檔
           </a>
@@ -186,7 +186,7 @@
       
         
         <li class="menu-item menu-item-tags">
-          <a href="" rel="section">
+          <a href="/tags" rel="section">
             
             標籤
           </a>
@@ -252,8 +252,8 @@
             
               
                 
-                <a class="post-title-link" href="2016/09/08/server-send-event/" itemprop="url">
-                  未命名
+                <a class="post-title-link" href="2016/07/27/redis-notification/" itemprop="url">
+                  Redis Notification
                 </a>
               
             
@@ -266,21 +266,14 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">發表於</span>
-            <time itemprop="dateCreated" datetime="2016-09-08T21:09:11+08:00" content="2016-09-08">
-              2016-09-08
+            <time itemprop="dateCreated" datetime="2016-07-27T22:49:42+08:00" content="2016-07-27">
+              2016-07-27
             </time>
           </span>
 
           
 
           
-            
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="2016/09/08/server-send-event/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/09/08/server-send-event/" itemprop="commentsCount"></span>
-                </a>
-              </span>
             
           
 
@@ -302,9 +295,12 @@
 
       
         
-          
-            
-          
+          <h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以節省系統資源。<br>本篇探討將使用 redis 的 keyspace notification 功能來實現資料異動的即時通知，並且以 PHP 程式來實作。<br>本篇將會以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="2016/07/27/redis-notification/#more" rel="contents">
+              閱讀全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -352,8 +348,8 @@
             
               
                 
-                <a class="post-title-link" href="2016/07/27/redis-notification/" itemprop="url">
-                  Redis Notification
+                <a class="post-title-link" href="2016/07/27/server-send-event/" itemprop="url">
+                  HTML5 Server Send Event
                 </a>
               
             
@@ -375,13 +371,6 @@
 
           
             
-              <span class="post-comments-count">
-                &nbsp; | &nbsp;
-                <a href="2016/07/27/redis-notification/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/07/27/redis-notification/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
           
 
           
@@ -402,9 +391,9 @@
 
       
         
-          <h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以節省系統資源。<br>本篇探討將使用 redis 的 keyspace notification 功能來實現資料異動的即時通知，並且以 PHP 程式來實作。<br>本篇將會以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。<br>
+          <h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1>
           <div class="post-more-link text-center">
-            <a class="btn" href="2016/07/27/redis-notification/#more" rel="contents">
+            <a class="btn" href="2016/07/27/server-send-event/#more" rel="contents">
               閱讀全文 &raquo;
             </a>
           </div>
@@ -485,7 +474,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">標籤</span>
               </a>
             </div>
@@ -629,25 +618,6 @@
 
 
 
-  
-
-    <script type="text/javascript">
-      var disqus_shortname = 'https-smjhang-github-io';
-      var disqus_identifier = 'index.html';
-      var disqus_title = "";
-      var disqus_url = '';
-
-      function run_disqus_script(disqus_script){
-        var dsq = document.createElement('script');
-        dsq.type = 'text/javascript';
-        dsq.async = true;
-        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-      }
-
-      run_disqus_script('count.js');
-      
-    </script>
   
 
 
