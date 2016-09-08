@@ -34,9 +34,9 @@
     <link href="http://yoursite.com/2016/07/27/redis-notification/"/>
     <id>http://yoursite.com/2016/07/27/redis-notification/</id>
     <published>2016-07-27T14:49:42.000Z</published>
-    <updated>2016-08-03T19:10:25.557Z</updated>
+    <updated>2016-09-08T14:43:28.704Z</updated>
     
-    <content type="html"><![CDATA[<h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以節省系統資源。<br>本篇探討將使用 redis 的 keyspace notification 功能來實現資料異動的即時通知，並且以 PHP 程式來實作。<br>本篇將會以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。</p>
+    <content type="html"><![CDATA[<h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以節省系統資源。<br>本篇探討將使用 redis 的 keyspace notification 功能來實現資料異動的即時通知，並且以 PHP 程式來實作。<br>本篇將會以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。<br><a id="more"></a></p>
 <h1 id="redis-資料結構規劃"><a href="#redis-資料結構規劃" class="headerlink" title="redis 資料結構規劃"></a>redis 資料結構規劃</h1><p>商品的資料儲存在 product:#id 的 hash，<br>並建立一個 set 用來維護商品清單。</p>
 <table>
 <thead>
@@ -405,7 +405,7 @@ id: 9
     
     <summary type="html">
     
-      &lt;h1 id=&quot;簡介&quot;&gt;&lt;a href=&quot;#簡介&quot; class=&quot;headerlink&quot; title=&quot;簡介&quot;&gt;&lt;/a&gt;簡介&lt;/h1&gt;&lt;p&gt;在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以
+      &lt;h1 id=&quot;簡介&quot;&gt;&lt;a href=&quot;#簡介&quot; class=&quot;headerlink&quot; title=&quot;簡介&quot;&gt;&lt;/a&gt;簡介&lt;/h1&gt;&lt;p&gt;在實現事件驅動設計的過程中，能夠讓資料庫在異動資料時自動發出通知是一個重要的環節，如此一來就不需要有另外一支程式不斷去查詢資料庫的異動，可以節省系統資源。&lt;br&gt;本篇探討將使用 redis 的 keyspace notification 功能來實現資料異動的即時通知，並且以 PHP 程式來實作。&lt;br&gt;本篇將會以一個線上購物網站的物品庫存清單為例，展示如何實作即時顯示當前貨品庫存量的功能。&lt;br&gt;
     
     </summary>
     
