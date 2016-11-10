@@ -30,7 +30,7 @@ $(document).ready(function () {
 
   function initAffix () {
     var headerHeight = $('.header-inner').height();
-    var footerOffset = parseInt($('.main.jpg').css('padding-bottom'), 10);
+    var footerOffset = parseInt($('.main').css('padding-bottom'), 10);
     var sidebarTop = headerHeight + 10;
 
     $('.sidebar-inner').affix({
