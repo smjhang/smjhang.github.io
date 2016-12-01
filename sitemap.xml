@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://smjhang.github.io/2016/12/01/laravel-demo-authentication/</loc>
+    
+    <lastmod>2016-12-01T07:34:44.689Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://smjhang.github.io/2016/09/08/server-send-event/</loc>
     
     <lastmod>2016-11-10T17:43:21.037Z</lastmod>
@@ -16,7 +23,7 @@
   </url>
   
   <url>
-    <loc>https://smjhang.github.io/tags/index.html</loc>
+    <loc>https://smjhang.github.io/categories/index.html</loc>
     
     <lastmod>2016-11-09T22:41:23.282Z</lastmod>
     
@@ -30,7 +37,7 @@
   </url>
   
   <url>
-    <loc>https://smjhang.github.io/categories/index.html</loc>
+    <loc>https://smjhang.github.io/tags/index.html</loc>
     
     <lastmod>2016-11-09T22:41:23.282Z</lastmod>
     
