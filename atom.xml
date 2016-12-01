@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://smjhang.github.io/"/>
-  <updated>2016-12-01T07:34:44.689Z</updated>
+  <updated>2016-12-01T08:30:42.573Z</updated>
   <id>https://smjhang.github.io/</id>
   
   <author>
@@ -20,15 +20,16 @@
     <link href="https://smjhang.github.io/2016/12/01/laravel-demo-authentication/"/>
     <id>https://smjhang.github.io/2016/12/01/laravel-demo-authentication/</id>
     <published>2016-12-01T06:26:42.000Z</published>
-    <updated>2016-12-01T07:34:44.689Z</updated>
+    <updated>2016-12-01T08:30:42.573Z</updated>
     
     <content type="html"><![CDATA[<h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>很多的網站應用程式都需要能辨識使用者，以記錄使用者的操作以及為不同身分的使用者提供不同的功能。為了要達成這個需求，網站應用程式必須要先驗證使用者後才能繼續進一步的操作。<br>由於這個驗證使用者的功能是如此的常見，因此很多框架、套件都有提供這個功能。本篇將介紹如何使用 Laravel 內建的使用者驗證功能。</p>
 <a id="more"></a>
 <h1 id="Laravel-提供的使用者驗證相關功能"><a href="#Laravel-提供的使用者驗證相關功能" class="headerlink" title="Laravel 提供的使用者驗證相關功能"></a>Laravel 提供的使用者驗證相關功能</h1><p>Laravel 已經提供了使用者註冊、使用者登入登出、忘記密碼寄送 email、重設密碼等功能，並且已經實現好了各功能的 Controller 部分，也提供了使用者的 Model 和建立資料庫的 migrations。<br>要啟用 Laravel 內建的使用者驗證功能，首先需要執行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">php artisan make:auth</div></pre></td></tr></table></figure></p>
 <p>和<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">php artisan migrate</div></pre></td></tr></table></figure></p>
 <p>第一個命令會建立這些功能的 views 和 routes，第二個命令會建立所需的資料庫。<br>然後還要改 .env 檔來設定要連線的資料庫和 email 的傳輸方式，這些功能會用到 email，因為當使用者忘記密碼會需要寄送 email 通知使用者重設密碼。<br>因為 migrations 只能建立資料表，不能建立資料庫，所以要先建立好資料庫並且設定好資料庫的連線。<br>這邊假設已建立好一個 laravel_demo 的資料庫，相關的 .env 設定如下：<br><figure class="highlight ini"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="attr">DB_CONNECTION</span>=mysql</div><div class="line"><span class="attr">DB_HOST</span>=<span class="number">127.0</span>.<span class="number">0.1</span></div><div class="line"><span class="attr">DB_PORT</span>=<span class="number">3306</span></div><div class="line"><span class="attr">DB_DATABASE</span>=laravel_demo</div><div class="line"><span class="attr">DB_USERNAME</span>=your_username</div><div class="line"><span class="attr">DB_PASSWORD</span>=your_password</div></pre></td></tr></table></figure></p>
-<p>然後這邊使用 gmail 來給使用者傳輸密碼郵件，當然也可以使用 sendemail 搭配 postfix 來寄送 email，這邊不詳細介紹，有興趣的人可以看<a href="http://linux.vbird.org/linux_server/0380mail.php" target="_blank" rel="external">鳥哥的Linux私房菜</a>了解如何設定 postfix 以及 <a href="https://laravel.com/docs/5.3/mail" target="_blank" rel="external">Laravel 官網</a> 了解如何設定 mail server 的連線。<br>如果應用程式要使用 gamil 的話，需要先跟 gmail 申請 app password 給應用程式使用。要在 laravel 中使用 gmail 的應用程式密碼可以在 .env 的 MAIL_PASSWORD 的部分填入申請好的應用程式密碼。<br>如果要使用其他的 mail server 需要參考該 mail server 的使用方式。</p>
+<p>然後這邊使用 gmail 來給使用者傳輸密碼郵件，當然也可以使用 sendemail 搭配 postfix 來寄送 email，這邊不詳細介紹，有興趣的人可以看<a href="http://linux.vbird.org/linux_server/0380mail.php" target="_blank" rel="external">鳥哥的Linux私房菜</a>了解如何設定 postfix 以及 <a href="https://laravel.com/docs/5.3/mail" target="_blank" rel="external">Laravel 官網</a> 了解如何設定 mail server 的連線。<br>如果應用程式要使用 google 帳戶來使用 gmail 服務的話，需要先跟 google 申請 app password 給應用程式使用。要在 laravel 中使用 gmail 的應用程式密碼可以在 .env 的 MAIL_PASSWORD 的部分填入申請好的應用程式密碼。<br>如果要使用其他的 mail server 需要參考該 mail server 的使用方式。</p>
 <figure class="highlight ini"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="attr">MAIL_DRIVER</span>=smtp</div><div class="line"><span class="attr">MAIL_HOST</span>=smtp.gmail.com</div><div class="line"><span class="attr">MAIL_PORT</span>=<span class="number">587</span></div><div class="line"><span class="attr">MAIL_USERNAME</span>=your_gamil_account</div><div class="line"><span class="attr">MAIL_PASSWORD</span>=your_gamil_app_password</div><div class="line"><span class="attr">MAIL_ENCRYPTION</span>=tls</div></pre></td></tr></table></figure>
+<p>修改完 .env 檔案，需要重啟 server。</p>
 <p>查看頁面:<br><img src="/2016/12/01/laravel-demo-authentication/auth_index.jpg" alt="首頁" title="首頁"><br>註冊頁面:<br><img src="/2016/12/01/laravel-demo-authentication/auth_register.jpg" alt="註冊頁" title="註冊頁"><br>登入頁面:<br><img src="/2016/12/01/laravel-demo-authentication/auth_login.jpg" alt="登入頁" title="登入頁"><br>登入後頁面:<br><img src="/2016/12/01/laravel-demo-authentication/auth_logined.jpg" alt="登入後頁面" title="登入後頁面"><br>密碼重設頁面:<br><img src="/2016/12/01/laravel-demo-authentication/auth_reset.jpg" alt="密碼重設頁面" title="密碼重設頁面"><br>寄發的 email:<br><img src="/2016/12/01/laravel-demo-authentication/auth_email.jpg" alt="寄發的 email" title="寄發的 email"></p>
 <p>小結：<br>大部分的網頁應用程式都需要能辨認使用者，在電子商務類型的網站這幾乎是必備的功能。<br>Laravel 為我們提供了大部分常用的使用者驗證功能，剩下的只需要客製化出需要的功能就好。<br>想了解更多如何客製化使用者驗證的方式可以參考 <a href="https://laravel.com/docs/5.3/authentication" target="_blank" rel="external">Laravel 官網</a>。</p>
 ]]></content>
