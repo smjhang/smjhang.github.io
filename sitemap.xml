@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://smjhang.github.io/2016/12/07/laravel-auth-custum1/</loc>
+    
+    <lastmod>2016-12-08T10:06:35.157Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://smjhang.github.io/2016/12/01/laravel-demo-authentication/</loc>
     
-    <lastmod>2016-12-01T16:59:52.072Z</lastmod>
+    <lastmod>2016-12-08T09:55:36.057Z</lastmod>
     
   </url>
   

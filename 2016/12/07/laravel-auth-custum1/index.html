@@ -1,0 +1,737 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="../../../../lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="../../../../lib/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="../../../../css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Laravel,PHP," />
+
+
+
+
+
+  <link rel="alternate" href="../../../../atom.xml" title="web development" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="../../../../favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="簡介在 Laravel 初探 - 使用者驗證 中提到了 Laravel 預設的使用者驗證相關功能的使用方式。本篇將要來介紹如何客製化這些功能，例如將原本以 email 來登入的方式改成用一個登入帳號來登入、提供使用者名稱來做為公開顯示用。即登入用的帳號和公開顯示的使用者名稱分開，如此可避免其他使用者透過公開的 email 或使用者名稱來嘗試登入他人的帳號。此外還新增一個狀態欄位來判斷一個帳號是否被">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Laravel 客製化使用者驗證功能-增加使用者資料欄位">
+<meta property="og:url" content="https://smjhang.github.io/2016/12/07/laravel-auth-custum1/index.html">
+<meta property="og:site_name" content="web development">
+<meta property="og:description" content="簡介在 Laravel 初探 - 使用者驗證 中提到了 Laravel 預設的使用者驗證相關功能的使用方式。本篇將要來介紹如何客製化這些功能，例如將原本以 email 來登入的方式改成用一個登入帳號來登入、提供使用者名稱來做為公開顯示用。即登入用的帳號和公開顯示的使用者名稱分開，如此可避免其他使用者透過公開的 email 或使用者名稱來嘗試登入他人的帳號。此外還新增一個狀態欄位來判斷一個帳號是否被">
+<meta property="og:image" content="https://smjhang.github.io/2016/12/07/laravel-auth-custum1/new_register.jpg">
+<meta property="og:image" content="https://smjhang.github.io/2016/12/07/laravel-auth-custum1/new_login.jpg">
+<meta property="og:image" content="https://smjhang.github.io/2016/12/07/laravel-auth-custum1/new_logined.jpg">
+<meta property="og:updated_time" content="2016-12-08T10:06:35.157Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Laravel 客製化使用者驗證功能-增加使用者資料欄位">
+<meta name="twitter:description" content="簡介在 Laravel 初探 - 使用者驗證 中提到了 Laravel 預設的使用者驗證相關功能的使用方式。本篇將要來介紹如何客製化這些功能，例如將原本以 email 來登入的方式改成用一個登入帳號來登入、提供使用者名稱來做為公開顯示用。即登入用的帳號和公開顯示的使用者名稱分開，如此可避免其他使用者透過公開的 email 或使用者名稱來嘗試登入他人的帳號。此外還新增一個狀態欄位來判斷一個帳號是否被">
+<meta name="twitter:image" content="https://smjhang.github.io/2016/12/07/laravel-auth-custum1/new_register.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="https://smjhang.github.io/2016/12/07/laravel-auth-custum1/"/>
+
+
+  <title> Laravel 客製化使用者驗證功能-增加使用者資料欄位 | web development </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-tw">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">web development</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首頁
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            歸檔
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+            標籤
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+            檢索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Laravel 客製化使用者驗證功能-增加使用者資料欄位
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">發表於</span>
+            <time itemprop="dateCreated" datetime="2016-12-07T06:08:59+08:00" content="2016-12-07">
+              2016-12-07
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="簡介"><a href="#簡介" class="headerlink" title="簡介"></a>簡介</h1><p>在 <a href="/2016/12/01/laravel-demo-authentication/">Laravel 初探 - 使用者驗證</a> 中提到了 Laravel 預設的使用者驗證相關功能的使用方式。<br>本篇將要來介紹如何客製化這些功能，例如將原本以 email 來登入的方式改成用一個登入帳號來登入、提供使用者名稱來做為公開顯示用。<br>即登入用的帳號和公開顯示的使用者名稱分開，如此可避免其他使用者透過公開的 email 或使用者名稱來嘗試登入他人的帳號。<br>此外還新增一個狀態欄位來判斷一個帳號是否被停權，可用於登入時的檢測。</p>
+<a id="more"></a>
+<h1 id="Laravel-內建使用者驗證功能概覽"><a href="#Laravel-內建使用者驗證功能概覽" class="headerlink" title="Laravel 內建使用者驗證功能概覽"></a>Laravel 內建使用者驗證功能概覽</h1><p>Laravel 提供了使用者登入、重設密碼、註冊使用者、忘記密碼寄送重設密碼 email 等功能。分別放在以下 controller:<br>App\Http\Controllers\Auth\LoginController<br>App\Http\Controllers\Auth\ResetPasswordController<br>App\Http\Controllers\Auth\RegisterController<br>App\Http\Controllers\Auth\ForgotPasswordController<br>從這些 controller 進入可以找到實作這些功能的相關邏輯及介面。</p>
+<p>本次的目標是新增使用者相關資料 login_name 做為登入用、user_name 做為顯示用、status 做為帳號停權時的判斷欄位，<br>並將原本以 email 登入的行為改成用 login_name 登入。<br>因此需要修改資料庫欄位、修改登入功能和註冊功能，並調整相關功能的介面。</p>
+<h1 id="利用-migrations-修改資料表欄位定義"><a href="#利用-migrations-修改資料表欄位定義" class="headerlink" title="利用 migrations 修改資料表欄位定義"></a>利用 migrations 修改資料表欄位定義</h1><p>使用 migrations 的好處是可以對資料庫的修改進行紀錄，並根據這些紀錄進行資料庫的版本控制。<br>這個功能只建議在開發環境使用，因為對資料庫欄位的修改通常會需要修改既有的資料。<br>在開發環境的測試資料都是可以自行填充的，還可以搭配 <a href="https://laravel.com/docs/5.3/seeding" target="_blank" rel="external">Database: Seeding</a> 來建立填充資料的腳本。<br>Migrations 的價值是可以團隊開發時同步各開發成員的開發環境，使得大家都用相同的資料庫欄位定義和測試資料來開發、測試。<br>由於 Laravel 已經提供了建立 users 資料表所需的 migrations，而在 <a href="/2016/12/01/laravel-demo-authentication/">Laravel 初探 - 使用者驗證</a> 中也執行該 migrations 將 users 建立起來了。<br>因此本篇將建立用來修改 users 資料表的 migration，執行以下命令來建立 migration:<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">php</span> <span class="selector-tag">artisan</span> <span class="selector-tag">make</span><span class="selector-pseudo">:migration</span> <span class="selector-tag">change_users_table</span></div></pre></td></tr></table></figure></p>
+<p>如此便可以看到在 database/migrations 多了一個檔案 2016_12_07_135158_change_users_table.php，前面的日期是執行這個命令時自動加的，可以幫助 Laravel 判斷 migrations 的先後順序。<br>修改新建的檔案 ~/laravel_demo/database/migrations/2016_12_07_135158_change_users_table.php:<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line"></div><div class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Support</span>\<span class="title">Facades</span>\<span class="title">Schema</span>;</div><div class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Database</span>\<span class="title">Schema</span>\<span class="title">Blueprint</span>;</div><div class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Database</span>\<span class="title">Migrations</span>\<span class="title">Migration</span>;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ChangeUsersTable</span> <span class="keyword">extends</span> <span class="title">Migration</span></span></div><div class="line">&#123;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * Run the migrations.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span> void</div><div class="line">     */</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">up</span><span class="params">()</span></span></div><div class="line">    &#123;</div><div class="line">        Schema::table(<span class="string">'users'</span>, <span class="function"><span class="keyword">function</span> <span class="params">(Blueprint $table)</span> </span>&#123;</div><div class="line">            <span class="comment">// 修改 users 資料表的 name 欄位，將其改名為 login_name</span></div><div class="line">            $table-&gt;renameColumn(<span class="string">'name'</span>, <span class="string">'login_name'</span>);</div><div class="line">            <span class="comment">// 將 login_name 增加 unique 索引，確保 login_name 的值都是唯一的</span></div><div class="line">            $table-&gt;unique(<span class="string">'login_name'</span>);</div><div class="line">            <span class="comment">// 移除 email 的 unique 索引</span></div><div class="line">            $table-&gt;dropUnique(<span class="string">'users_email_unique'</span>);</div><div class="line">            <span class="comment">// 在 name 後面新增 user_name 欄位，這邊的欄位順序似乎是參考未執行 migrate 時的狀態，</span></div><div class="line">            <span class="comment">// 此時 name 尚未改成 login_name，因此如果不用 name 而改用 login_name 的話會發生找不到欄位的錯誤</span></div><div class="line">            $table-&gt;string(<span class="string">'user_name'</span>)-&gt;after(<span class="string">'name'</span>);</div><div class="line">            <span class="comment">// 在 email 欄位後面新增 status 欄位，預設值為 'active'</span></div><div class="line">            $table-&gt;string(<span class="string">'status'</span>)-&gt;after(<span class="string">'email'</span>)-&gt;default(<span class="string">'active'</span>);</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * Reverse the migrations.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span> void</div><div class="line">     */</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">down</span><span class="params">()</span></span></div><div class="line">    &#123;</div><div class="line">        Schema::table(<span class="string">'users'</span>, <span class="function"><span class="keyword">function</span> <span class="params">(Blueprint $table)</span> </span>&#123;</div><div class="line">		    </div><div class="line">            $table-&gt;dropColumn(<span class="string">'status'</span>);</div><div class="line">            $table-&gt;dropColumn(<span class="string">'user_name'</span>);</div><div class="line">            $table-&gt;unique(<span class="string">'email'</span>);</div><div class="line">            $table-&gt;dropUnique(<span class="string">'users_login_name_unique'</span>);</div><div class="line">            $table-&gt;renameColumn(<span class="string">'login_name'</span>, <span class="string">'name'</span>);</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>這個類別提供了兩個方法，up 和 down 分別是在執行資料表變更和還原變更時要執行的方法。<br>在本次的變更中，我需要將原本做為使用者名稱顯示的 name 欄位改成 login_name 做為登入用的欄位，即該欄位的值必須是唯一的，如此才能用來辨識登入的使用者。<br>然後取消原本 email 欄位用作登入的用途，即將 email 欄位的唯一性移除。<br>最後再新增一個 status 欄位做為使用者帳號的狀態。<br>在 down 的部分我習慣將 up 執行過的動作，依相反的順序執行相反的動作。<br>然後 unique 索引在新增和移除的過程中會檢查資料表的資料是否符合唯一性限制，因此我習慣將資料清空再執行 migrate。<br>如需要更多關於 migration 的實作方式可以參考 <a href="https://laravel.com/docs/5.3/migrations" target="_blank" rel="external">Database: Migrations</a>。<br>Migrations 建好後可以執行以下命令來修改資料庫：<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="attribute">php</span> artisan migrate</div></pre></td></tr></table></figure></p>
+<h1 id="修改-Users-資料模型"><a href="#修改-Users-資料模型" class="headerlink" title="修改 Users 資料模型"></a>修改 Users 資料模型</h1><p>Laravel 預設是使用 Eloquent ORM 來存取資料庫，因此需要有一些模型物件(Model)來表示資料庫的資料，一個模型對應一個資料表，而模型的實例(instance)對應資料表一行(one row)的資料。<br>Laravel 預設已有提供 App/User 模型了，不過我習慣開一個 ~/laravel_demo/app/Models 目錄來放模型，然後把 App/User 的檔案搬進去 app/Models 目錄內。<br>而因為檔案的位置改了，為了遵守 Laravel 自動載入檔案的規則需要將 App/User 的命名空間改成 App/Models。<br>修改 ~/laravel/app/Models/User.php 如下:<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line"></div><div class="line"><span class="keyword">namespace</span> <span class="title">App</span>\<span class="title">Models</span>;</div><div class="line"></div><div class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Notifications</span>\<span class="title">Notifiable</span>;</div><div class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Foundation</span>\<span class="title">Auth</span>\<span class="title">User</span> <span class="title">as</span> <span class="title">Authenticatable</span>;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">User</span> <span class="keyword">extends</span> <span class="title">Authenticatable</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">use</span> <span class="title">Notifiable</span>;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * The attributes that are mass assignable.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@var</span> array</div><div class="line">     */</div><div class="line">    <span class="keyword">protected</span> $fillable = [</div><div class="line">        <span class="string">'login_name'</span>, <span class="string">'user_name'</span>, <span class="string">'email'</span>, <span class="string">'password'</span>,</div><div class="line">    ];</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * The attributes that should be hidden for arrays.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@var</span> array</div><div class="line">     */</div><div class="line">    <span class="keyword">protected</span> $hidden = [</div><div class="line">        <span class="string">'password'</span>, <span class="string">'remember_token'</span>,</div><div class="line">    ];</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>由於變更了命名空間，所以需要把整個專案用到 App/User 的地方都重構成 App/Models/User。<br>$fillable 屬性指定在整批設定(mass assignment)的時候哪些欄位可以直接存入資料庫，這是一個為了資料庫的安全性而做的設定，<br>因為有些應用會直接把外部資料整批設定後存入資料庫，而有些不希望被使用者自行修改的欄位資料(例如：權限、身分)就這樣被修改了。<br>例如：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line">$user = <span class="keyword">new</span> User(Input::all());</div><div class="line">$user-&gt;save();</div></pre></td></tr></table></figure></p>
+<p>只有在 $fillable 內的欄位才可以透過整批設定的方式存進資料庫。<br>由於新增了 ‘login_name’, ‘user_name’ 所以要把這兩個欄位加進去，否則就不會將資料寫進資料庫了。<br>這邊沒有 status 的理由是因為 status 是控制帳號是否停權的欄位，不允許使用者自行修改，因此不讓它可以在整批設定的情況下被寫入資料庫。<br>$hidden 屬性指定在模型做序列化(Serialization)給外界讀取時需要隱藏的資料欄位。由於 password 是機密資訊，不允許外洩，所以這邊就有 password 了，<br>而 remember_token 是自動登入用的資訊同樣也不允許外洩。</p>
+<h1 id="修改登入功能"><a href="#修改登入功能" class="headerlink" title="修改登入功能"></a>修改登入功能</h1><p>修改 App\Http\Controllers\Auth\LoginController，加入以下 username 方法如下：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">namespace</span> <span class="title">App</span>\<span class="title">Http</span>\<span class="title">Controllers</span>\<span class="title">Auth</span>;</div><div class="line"></div><div class="line"><span class="keyword">use</span> <span class="title">App</span>\<span class="title">Http</span>\<span class="title">Controllers</span>\<span class="title">Controller</span>;</div><div class="line"><span class="keyword">use</span> <span class="title">Illuminate</span>\<span class="title">Foundation</span>\<span class="title">Auth</span>\<span class="title">AuthenticatesUsers</span>;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">LoginController</span> <span class="keyword">extends</span> <span class="title">Controller</span></span></div><div class="line">&#123;</div><div class="line">    <span class="comment">/*</span></div><div class="line">    |--------------------------------------------------------------------------</div><div class="line">    | Login Controller</div><div class="line">    |--------------------------------------------------------------------------</div><div class="line">    |</div><div class="line">    | This controller handles authenticating users for the application and</div><div class="line">    | redirecting them to your home screen. The controller uses a trait</div><div class="line">    | to conveniently provide its functionality to your applications.</div><div class="line">    |</div><div class="line">    */</div><div class="line"></div><div class="line">    <span class="keyword">use</span> <span class="title">AuthenticatesUsers</span>;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * Where to redirect users after login.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@var</span> string</div><div class="line">     */</div><div class="line">    <span class="keyword">protected</span> $redirectTo = <span class="string">'/home'</span>;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * Create a new controller instance.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span> void</div><div class="line">     */</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">$this</span>-&gt;middleware(<span class="string">'guest'</span>, [<span class="string">'except'</span> =&gt; <span class="string">'logout'</span>]);</div><div class="line">    &#125;</div><div class="line">    &lt;b&gt;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * Get the login username to be used by the controller.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span> string</div><div class="line">     */</div><div class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">username</span><span class="params">()</span></span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">return</span> <span class="string">'login_name'</span>;</div><div class="line">    &#125;</div><div class="line">    &lt;/b&gt;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>LoginController 透過使用 AuthenticatesUsers 這個 Laravel 內建的 trait 來提供各方法的實作，而其中 username 這個方法就是用來指定登入要用的欄位的。<br>由於本次的目標就是要將原本用 email 欄位登入的行為改成用 login_name 來登入，所以在 LoginController 覆寫(overwrite) username 這個方法。<br>一般來說使用 framework 時並不會直接去改 framework 內建的程式碼，而是透過繼承覆寫、實作介面等方式來客製化需要的功能。<br>現在要修改介面，改資料庫欄位需要修改三個介面：主版面、登入功能的介面、註冊功能的介面。這三個介面分別放在：<br>~/laravel_demo/resources/views/layouts/app.blade.php<br>~/laravel_demo/resources/views/auth/login.blade.php<br>~/laravel_demo/resources/views/auth/register.blade.php<br>除了更改修改這些介面綁定的模型欄位以外，我還進行了中文化。修改如下：<br>~/laravel_demo/resources/views/layouts/app.blade.php<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;!DOCTYPE html&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"utf-8"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">"X-UA-Compatible"</span> <span class="attr">content</span>=<span class="string">"IE=edge"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"viewport"</span> <span class="attr">content</span>=<span class="string">"width=device-width, initial-scale=1"</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="comment">&lt;!-- CSRF Token --&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"csrf-token"</span> <span class="attr">content</span>=<span class="string">"&#123;&#123; csrf_token() &#125;&#125;"</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>&#123;&#123; config('app.name', 'Laravel') &#125;&#125;<span class="tag">&lt;/<span class="name">title</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="comment">&lt;!-- Styles --&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">link</span> <span class="attr">href</span>=<span class="string">"/css/app.css"</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="comment">&lt;!-- Scripts --&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript"></span></div><div class="line">        <span class="built_in">window</span>.Laravel = <span class="xml"><span class="php"><span class="meta">&lt;?php</span> <span class="keyword">echo</span> json_encode([</span></span></div><div class="line">            <span class="string">'csrfToken'</span> =&gt; csrf_token(),</div><div class="line">        ]); <span class="meta">?&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">script</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"app"</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">nav</span> <span class="attr">class</span>=<span class="string">"navbar navbar-default navbar-static-top"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"container"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"navbar-header"</span>&gt;</span></div><div class="line"></div><div class="line">                    <span class="comment">&lt;!-- Collapsed Hamburger --&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">"button"</span> <span class="attr">class</span>=<span class="string">"navbar-toggle collapsed"</span> <span class="attr">data-toggle</span>=<span class="string">"collapse"</span> <span class="attr">data-target</span>=<span class="string">"#app-navbar-collapse"</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"sr-only"</span>&gt;</span>Toggle Navigation<span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"icon-bar"</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"icon-bar"</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"icon-bar"</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;/<span class="name">button</span>&gt;</span></div><div class="line"></div><div class="line">                    <span class="comment">&lt;!-- Branding Image --&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">a</span> <span class="attr">class</span>=<span class="string">"navbar-brand"</span> <span class="attr">href</span>=<span class="string">"&#123;&#123; url('/') &#125;&#125;"</span>&gt;</span></div><div class="line">                        &#123;&#123; config('app.name', 'Laravel') &#125;&#125;</div><div class="line">                    <span class="tag">&lt;/<span class="name">a</span>&gt;</span></div><div class="line">                <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"collapse navbar-collapse"</span> <span class="attr">id</span>=<span class="string">"app-navbar-collapse"</span>&gt;</span></div><div class="line">                    <span class="comment">&lt;!-- Left Side Of Navbar --&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">ul</span> <span class="attr">class</span>=<span class="string">"nav navbar-nav"</span>&gt;</span></div><div class="line">                        &amp;nbsp;</div><div class="line">                    <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></div><div class="line"></div><div class="line">                    <span class="comment">&lt;!-- Right Side Of Navbar --&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">ul</span> <span class="attr">class</span>=<span class="string">"nav navbar-nav navbar-right"</span>&gt;</span></div><div class="line">                        <span class="comment">&lt;!-- Authentication Links --&gt;</span></div><div class="line">                        @if (Auth::guest())</div><div class="line">                            <span class="tag">&lt;<span class="name">li</span>&gt;</span><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"&#123;&#123; url('/login') &#125;&#125;"</span>&gt;</span>Login<span class="tag">&lt;/<span class="name">a</span>&gt;</span><span class="tag">&lt;/<span class="name">li</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">li</span>&gt;</span><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"&#123;&#123; url('/register') &#125;&#125;"</span>&gt;</span>Register<span class="tag">&lt;/<span class="name">a</span>&gt;</span><span class="tag">&lt;/<span class="name">li</span>&gt;</span></div><div class="line">                        @else</div><div class="line">                            <span class="tag">&lt;<span class="name">li</span> <span class="attr">class</span>=<span class="string">"dropdown"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">class</span>=<span class="string">"dropdown-toggle"</span> <span class="attr">data-toggle</span>=<span class="string">"dropdown"</span> <span class="attr">role</span>=<span class="string">"button"</span> <span class="attr">aria-expanded</span>=<span class="string">"false"</span>&gt;</span></div><div class="line">                                    &#123;&#123; Auth::user()-&gt;user_name &#125;&#125; <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"caret"</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;/<span class="name">a</span>&gt;</span></div><div class="line"></div><div class="line">                                <span class="tag">&lt;<span class="name">ul</span> <span class="attr">class</span>=<span class="string">"dropdown-menu"</span> <span class="attr">role</span>=<span class="string">"menu"</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;<span class="name">li</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"&#123;&#123; url('/logout') &#125;&#125;"</span></span></div><div class="line">                                            <span class="attr">onclick</span>=<span class="string">"event.preventDefault();</span></div><div class="line">                                                     document.getElementById('logout-form').submit();"&gt;</div><div class="line">                                            Logout</div><div class="line">                                        <span class="tag">&lt;/<span class="name">a</span>&gt;</span></div><div class="line"></div><div class="line">                                        <span class="tag">&lt;<span class="name">form</span> <span class="attr">id</span>=<span class="string">"logout-form"</span> <span class="attr">action</span>=<span class="string">"&#123;&#123; url('/logout') &#125;&#125;"</span> <span class="attr">method</span>=<span class="string">"POST"</span> <span class="attr">style</span>=<span class="string">"display: none;"</span>&gt;</span></div><div class="line">                                            &#123;&#123; csrf_field() &#125;&#125;</div><div class="line">                                        <span class="tag">&lt;/<span class="name">form</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;/<span class="name">li</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;/<span class="name">li</span>&gt;</span></div><div class="line">                        @endif</div><div class="line">                    <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></div><div class="line">                <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">nav</span>&gt;</span></div><div class="line"></div><div class="line">        @yield('content')</div><div class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="comment">&lt;!-- Scripts --&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"/js/app.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>~/laravel_demo/resources/views/auth/login.blade.php<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div></pre></td><td class="code"><pre><div class="line">@extends('layouts.app')</div><div class="line"></div><div class="line">@section('content')</div><div class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"container"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"row"</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-8 col-md-offset-2"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"panel panel-default"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"panel-heading"</span>&gt;</span>Login<span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"panel-body"</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">form</span> <span class="attr">class</span>=<span class="string">"form-horizontal"</span> <span class="attr">role</span>=<span class="string">"form"</span> <span class="attr">method</span>=<span class="string">"POST"</span> <span class="attr">action</span>=<span class="string">"&#123;&#123; url('/login') &#125;&#125;"</span>&gt;</span></div><div class="line">                        &#123;&#123; csrf_field() &#125;&#125;</div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group&#123;&#123; $errors-&gt;has('login_name') ? ' has-error' : '' &#125;&#125;"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">"login_name"</span> <span class="attr">class</span>=<span class="string">"col-md-4 control-label"</span>&gt;</span>登入帳號<span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line"></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"login_name"</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">class</span>=<span class="string">"form-control"</span> <span class="attr">name</span>=<span class="string">"login_name"</span> <span class="attr">value</span>=<span class="string">"&#123;&#123; old('login_name') &#125;&#125;"</span> <span class="attr">required</span> <span class="attr">autofocus</span>&gt;</span></div><div class="line"></div><div class="line">                                @if ($errors-&gt;has('login_name'))</div><div class="line">                                    <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"help-block"</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">strong</span>&gt;</span>&#123;&#123; $errors-&gt;first('login_name') &#125;&#125;<span class="tag">&lt;/<span class="name">strong</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                                @endif</div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group&#123;&#123; $errors-&gt;has('password') ? ' has-error' : '' &#125;&#125;"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">"password"</span> <span class="attr">class</span>=<span class="string">"col-md-4 control-label"</span>&gt;</span>密碼<span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line"></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"password"</span> <span class="attr">type</span>=<span class="string">"password"</span> <span class="attr">class</span>=<span class="string">"form-control"</span> <span class="attr">name</span>=<span class="string">"password"</span> <span class="attr">required</span>&gt;</span></div><div class="line"></div><div class="line">                                @if ($errors-&gt;has('password'))</div><div class="line">                                    <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"help-block"</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">strong</span>&gt;</span>&#123;&#123; $errors-&gt;first('password') &#125;&#125;<span class="tag">&lt;/<span class="name">strong</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                                @endif</div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6 col-md-offset-4"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"checkbox"</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;<span class="name">label</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"checkbox"</span> <span class="attr">name</span>=<span class="string">"remember"</span>&gt;</span> 記住我</div><div class="line">                                    <span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-8 col-md-offset-4"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">class</span>=<span class="string">"btn btn-primary"</span>&gt;</span></div><div class="line">                                    登入</div><div class="line">                                <span class="tag">&lt;/<span class="name">button</span>&gt;</span></div><div class="line"></div><div class="line">                                <span class="tag">&lt;<span class="name">a</span> <span class="attr">class</span>=<span class="string">"btn btn-link"</span> <span class="attr">href</span>=<span class="string">"&#123;&#123; url('/password/reset') &#125;&#125;"</span>&gt;</span></div><div class="line">                                    忘記密碼?</div><div class="line">                                <span class="tag">&lt;/<span class="name">a</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></div><div class="line">                <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">@endsection</div></pre></td></tr></table></figure></p>
+<p>~/laravel_demo/resources/views/auth/register.blade.php<br><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div></pre></td><td class="code"><pre><div class="line">@extends('layouts.app')</div><div class="line"></div><div class="line">@section('content')</div><div class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"container"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"row"</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-8 col-md-offset-2"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"panel panel-default"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"panel-heading"</span>&gt;</span>Register<span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"panel-body"</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">form</span> <span class="attr">class</span>=<span class="string">"form-horizontal"</span> <span class="attr">role</span>=<span class="string">"form"</span> <span class="attr">method</span>=<span class="string">"POST"</span> <span class="attr">action</span>=<span class="string">"&#123;&#123; url('/register') &#125;&#125;"</span>&gt;</span></div><div class="line">                        &#123;&#123; csrf_field() &#125;&#125;</div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group&#123;&#123; $errors-&gt;has('login_name') ? ' has-error' : '' &#125;&#125;"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">"login_name"</span> <span class="attr">class</span>=<span class="string">"col-md-4 control-label"</span>&gt;</span>登入帳號<span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line"></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"login_name"</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">class</span>=<span class="string">"form-control"</span> <span class="attr">name</span>=<span class="string">"login_name"</span> <span class="attr">value</span>=<span class="string">"&#123;&#123; old('login_name') &#125;&#125;"</span> <span class="attr">required</span> <span class="attr">autofocus</span>&gt;</span></div><div class="line"></div><div class="line">                                @if ($errors-&gt;has('login_name'))</div><div class="line">                                    <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"help-block"</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">strong</span>&gt;</span>&#123;&#123; $errors-&gt;first('login_name') &#125;&#125;<span class="tag">&lt;/<span class="name">strong</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                                @endif</div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group&#123;&#123; $errors-&gt;has('user_name') ? ' has-error' : '' &#125;&#125;"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">"login_name"</span> <span class="attr">class</span>=<span class="string">"col-md-4 control-label"</span>&gt;</span>顯示名稱<span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line"></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"user_name"</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">class</span>=<span class="string">"form-control"</span> <span class="attr">name</span>=<span class="string">"user_name"</span> <span class="attr">value</span>=<span class="string">"&#123;&#123; old('user_name') &#125;&#125;"</span> <span class="attr">required</span> <span class="attr">autofocus</span>&gt;</span></div><div class="line"></div><div class="line">                                @if ($errors-&gt;has('user_name'))</div><div class="line">                                    <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"help-block"</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">strong</span>&gt;</span>&#123;&#123; $errors-&gt;first('user_name') &#125;&#125;<span class="tag">&lt;/<span class="name">strong</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                                @endif</div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group&#123;&#123; $errors-&gt;has('email') ? ' has-error' : '' &#125;&#125;"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">"email"</span> <span class="attr">class</span>=<span class="string">"col-md-4 control-label"</span>&gt;</span>電子郵件<span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line"></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"email"</span> <span class="attr">type</span>=<span class="string">"email"</span> <span class="attr">class</span>=<span class="string">"form-control"</span> <span class="attr">name</span>=<span class="string">"email"</span> <span class="attr">value</span>=<span class="string">"&#123;&#123; old('email') &#125;&#125;"</span> <span class="attr">required</span>&gt;</span></div><div class="line"></div><div class="line">                                @if ($errors-&gt;has('email'))</div><div class="line">                                    <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"help-block"</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">strong</span>&gt;</span>&#123;&#123; $errors-&gt;first('email') &#125;&#125;<span class="tag">&lt;/<span class="name">strong</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                                @endif</div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group&#123;&#123; $errors-&gt;has('password') ? ' has-error' : '' &#125;&#125;"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">"password"</span> <span class="attr">class</span>=<span class="string">"col-md-4 control-label"</span>&gt;</span>密碼<span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line"></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"password"</span> <span class="attr">type</span>=<span class="string">"password"</span> <span class="attr">class</span>=<span class="string">"form-control"</span> <span class="attr">name</span>=<span class="string">"password"</span> <span class="attr">required</span>&gt;</span></div><div class="line"></div><div class="line">                                @if ($errors-&gt;has('password'))</div><div class="line">                                    <span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"help-block"</span>&gt;</span></div><div class="line">                                        <span class="tag">&lt;<span class="name">strong</span>&gt;</span>&#123;&#123; $errors-&gt;first('password') &#125;&#125;<span class="tag">&lt;/<span class="name">strong</span>&gt;</span></div><div class="line">                                    <span class="tag">&lt;/<span class="name">span</span>&gt;</span></div><div class="line">                                @endif</div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">label</span> <span class="attr">for</span>=<span class="string">"password-confirm"</span> <span class="attr">class</span>=<span class="string">"col-md-4 control-label"</span>&gt;</span>再次確認密碼<span class="tag">&lt;/<span class="name">label</span>&gt;</span></div><div class="line"></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">input</span> <span class="attr">id</span>=<span class="string">"password-confirm"</span> <span class="attr">type</span>=<span class="string">"password"</span> <span class="attr">class</span>=<span class="string">"form-control"</span> <span class="attr">name</span>=<span class="string">"password_confirmation"</span> <span class="attr">required</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"></div><div class="line">                        <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"form-group"</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"col-md-6 col-md-offset-4"</span>&gt;</span></div><div class="line">                                <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">class</span>=<span class="string">"btn btn-primary"</span>&gt;</span></div><div class="line">                                    Register</div><div class="line">                                <span class="tag">&lt;/<span class="name">button</span>&gt;</span></div><div class="line">                            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></div><div class="line">                <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">            <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">@endsection</div></pre></td></tr></table></figure></p>
+<p>從註冊頁面可以看到新的欄位已被加入了:<br><img src="/2016/12/07/laravel-auth-custum1/new_register.jpg" alt="註冊頁面" title="註冊頁面"><br>登入頁面已經從原本的用 email 登入，改成用登入帳號登入了:<br><img src="/2016/12/07/laravel-auth-custum1/new_login.jpg" alt="登入頁面" title="登入頁面"><br>登入後的頁面，可以看到左上方顯示的名稱為使用者名稱，不是登入帳號::<br><img src="/2016/12/07/laravel-auth-custum1/new_logined.jpg" alt="登入後頁面" title="登入後頁面"></p>
+<h1 id="小結"><a href="#小結" class="headerlink" title="小結"></a>小結</h1><p>本篇介紹了如何客製化 Laravel 內建的使用者驗證功能：增加欄位、改用不同的欄位資料登入。<br>Laravel 提供的使用者登入、重設密碼、註冊使用者、忘記密碼寄送重設密碼 email 等功能都可以在對應的 controller 找到，<br>從 controller 可以找到對應的 view 和使用的 model，再依需求修改就可以了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="../../../../tags/Laravel/" rel="tag">#Laravel</a>
+          
+            <a href="../../../../tags/PHP/" rel="tag">#PHP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="../../01/laravel-demo-authentication/" rel="next" title="Laravel 初探 - 使用者驗證">
+                <i class="fa fa-chevron-left"></i> Laravel 初探 - 使用者驗證
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目錄
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            本站概覽
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="../../../../images/avatar.gif"
+               alt="Siou-Ming Jhang" />
+          <p class="site-author-name" itemprop="name">Siou-Ming Jhang</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="../../../../archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">文章</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="../../../../tags">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">標籤</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="../../../../atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#簡介"><span class="nav-number">1.</span> <span class="nav-text">簡介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Laravel-內建使用者驗證功能概覽"><span class="nav-number">2.</span> <span class="nav-text">Laravel 內建使用者驗證功能概覽</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#利用-migrations-修改資料表欄位定義"><span class="nav-number">3.</span> <span class="nav-text">利用 migrations 修改資料表欄位定義</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#修改-Users-資料模型"><span class="nav-number">4.</span> <span class="nav-text">修改 Users 資料模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#修改登入功能"><span class="nav-number">5.</span> <span class="nav-text">修改登入功能</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小結"><span class="nav-number">6.</span> <span class="nav-text">小結</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Siou-Ming Jhang</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 強力驅動
+</div>
+
+<div class="theme-info">
+  主題 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="../../../../lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="../../../../lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="../../../../lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="../../../../lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="../../../../lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/affix.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="../../../../js/src/schemes/pisces.js?v=5.0.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="../../../../js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="../../../../js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="../../../../js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = false;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = decodeURIComponent(data.url);
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title >= 0 || index_content >= 0 ){
+                                isMatch = true;
+								if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            } 
+							
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
